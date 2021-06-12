@@ -65,12 +65,19 @@ namespace Producer
 
                     var json = JsonSerializer.Serialize(trade, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
                     Log.Debug("Writing trade {Trade} to topic {Topic}", json, topic);
-
-                    var result = await producer.ProduceAsync(topic, new Message<Null, string>() { Value = json }, token);
-                    if (result.Status == PersistenceStatus.Persisted)
-                        Log.Debug("Successfully persisted");
-                    else
-                        Log.Warning("Failed to write to topic {topic}: {@Result}", topic, result);
+                    try
+                    {
+                        var resultToken = new CancellationTokenSource(10000);
+                        var result = await producer.ProduceAsync(topic, new Message<Null, string>() { Value = json }, resultToken.Token);
+                        if (result.Status == PersistenceStatus.Persisted)
+                            Log.Debug("Successfully persisted");
+                        else
+                            Log.Warning("Failed to write to topic {topic}: {Result}", topic, result.Value);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, "Failed to produce message");
+                    }
                 }
             }
         }

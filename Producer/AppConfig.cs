@@ -24,6 +24,7 @@ namespace Producer
         {
             try
             {
+                //export server="172.22.160.151:9092"
                 var env = Environment.GetEnvironmentVariable(name);
                 if (env is not null and T val)
                     return val;
