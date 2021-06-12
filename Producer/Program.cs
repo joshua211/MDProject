@@ -7,7 +7,6 @@ using System.Text.Json;
 using CoinbasePro;
 using CoinbasePro.WebSocket.Types;
 using System.Collections.Generic;
-using CoinbasePro.WebSocket.Models.Response;
 
 namespace Producer
 {
