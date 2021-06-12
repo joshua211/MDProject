@@ -7,36 +7,47 @@ using System.Text.Json;
 using CoinbasePro;
 using CoinbasePro.WebSocket.Types;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Producer
 {
     class Program
     {
+        static ConcurrentQueue<Trade> Queue;
         static async Task Main(string[] args)
         {
-            const string server = "172.22.160.151:9092";
-            const string product = "BTC-EUR";
+            Queue = new ConcurrentQueue<Trade>();
+            var appConfig = new AppConfig("appsettings.json");
+            string server = appConfig.Get<string>("server");
+            var products = appConfig.Get<List<string>>("products");
 
-            var config = new ProducerConfig
-            {
-                BootstrapServers = server,
-                ClientId = Dns.GetHostName(),
-            };
             var coinbaseClient = new CoinbaseProClient();
 
             var socket = coinbaseClient.WebSocket;
-            socket.Start(new List<string>() { product }, new List<ChannelType>() { ChannelType.Matches });
-            socket.OnMatchReceived += (sender, args) => WriteToTopic(config, new { TradeId = args.LastOrder.TradeId, Price = args.LastOrder.Price, Time = args.LastOrder.Time });
+            socket.OnMatchReceived += (sender, args) => Queue.Enqueue(new Trade(args.LastOrder.TradeId, args.LastOrder.Time.Date, args.LastOrder.Price));
 
-            Console.ReadKey();
+            socket.Start(products, new List<ChannelType>() { ChannelType.Matches });
+            var tokenSource = new CancellationTokenSource();
+
+            await Task.Run(() => Run(new ProducerConfig
+            {
+                BootstrapServers = server,
+                ClientId = Dns.GetHostName(),
+            }, tokenSource.Token));
         }
 
-        private static async void WriteToTopic(ProducerConfig config, object trade)
+        private static async Task Run(ProducerConfig config, CancellationToken token)
         {
             using (var producer = new ProducerBuilder<Null, string>(config).Build())
             {
-                var json = JsonSerializer.Serialize(trade, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
-                var result = await producer.ProduceAsync("myTestTopic", new Message<Null, string>() { Value = json }, CancellationToken.None);
+                while (!token.IsCancellationRequested)
+                {
+                    if (!Queue.TryDequeue(out var trade))
+                        continue;
+
+                    var json = JsonSerializer.Serialize(trade, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+                    var result = await producer.ProduceAsync("myTestTopic", new Message<Null, string>() { Value = json }, CancellationToken.None);
+                }
             }
         }
     }
