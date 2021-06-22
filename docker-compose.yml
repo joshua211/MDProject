@@ -215,12 +215,26 @@ services:
       - zookeeper
       - broker
       - schema-registry
+      - connect
     networks: 
       - net
     build:
       context: .
       dockerfile: Producer/Dockerfile
 
+  mongodb_container:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_data_container:/data/db
+
 networks:
   net:
     external: true
+
+volumes:
+  mongodb_data_container:
