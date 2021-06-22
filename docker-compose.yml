@@ -235,6 +235,7 @@ services:
       dockerfile: Producer/Dockerfile
 
   mongodb_container:
+    container_name: mongo
     image: mongo:latest
     networks: 
       - net
