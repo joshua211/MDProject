@@ -65,6 +65,18 @@ services:
   connect:
     image: cnfldemos/cp-server-connect-datagen:0.3.2-5.5.0
     hostname: connect
+    command:
+      - bash 
+      - -c 
+      - |
+        # Install connector plugins
+        # This will by default install into /usr/share/confluent-hub-components/ so make
+        #  sure that this path is added to the plugin.path in the environment variables 
+        confluent-hub install --no-prompt mongodb/kafka-connect-mongodb:1.5.1
+        # Launch the Kafka Connect worker
+        /etc/confluent/docker/run &
+        # Don't exit
+        sleep infinity
     networks: 
       - net
     container_name: connect
@@ -224,6 +236,8 @@ services:
 
   mongodb_container:
     image: mongo:latest
+    networks: 
+      - net
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
