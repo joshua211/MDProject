@@ -32,7 +32,7 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://broker:9092
       KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
@@ -245,7 +245,43 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - mongodb_data_container:/data/db
+      - mongodb_data_container:/data/db 
+    
+  jobmanager:
+    image: flink:1.13.0-scala_2.11
+    networks: 
+      - net
+    #image: flink:1.9
+    container_name: flink-jobmanager
+    volumes:
+            - ./jar:/home/project:cached
+    expose:
+      - 6123
+      - 6500
+    command: jobmanager
+    ports: 
+      - 7777:8081
+    
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
+
+  taskmanager:
+    image: flink:1.13.0-scala_2.11
+    networks: 
+      - net
+    container_name: flink-taskmanager
+    volumes:
+            - ./jar:/home/project:cached
+    expose:
+      - 6121
+      - 6122
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    links:
+      - "jobmanager:jobmanager"
+    environment:
+      JOB_MANAGER_RPC_ADDRESS: jobmanager
 
 networks:
   net:

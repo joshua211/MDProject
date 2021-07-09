@@ -1,0 +1,7 @@
+org/myorg/quickstart/BatchJob.class
+org/myorg/quickstart/StreamingJob$Splitter.class
+org/myorg/quickstart/WindowWordCount$Map.class
+org/myorg/quickstart/StreamingJob.class
+org/myorg/quickstart/WindowWordCount$1.class
+org/myorg/quickstart/WindowWordCount.class
+org/myorg/quickstart/WindowWordCount$AVG.class
