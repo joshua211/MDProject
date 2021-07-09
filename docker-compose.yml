@@ -283,9 +283,60 @@ services:
     environment:
       JOB_MANAGER_RPC_ADDRESS: jobmanager
 
+
+  influxdb:
+    image: influxdb:latest    
+    container_name: influxdb
+    ports:
+      - '8086:8086'
+    networks: 
+      - net
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    environment:
+      - INFLUXDB_DB=db0
+      - AUTH_ENABLED=false
+      - INFLUXDB_ADMIN_USER=root
+      - INFLUXDB_ADMIN_PASSWORD=rootpassword
+
+
+  chronograf:
+    image: chronograf:latest
+    ports:
+      - '127.0.0.1:8888:8888'
+    networks: 
+      - net
+    volumes:
+      - chronograf-storage:/var/lib/chronograf
+    depends_on:
+      - influxdb
+    environment:
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_USERNAME=root
+      - INFLUXDB_PASSWORD=rootpassword
+
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - '3000:3000'
+    networks: 
+      - net
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./grafana-provisioning/:/etc/grafana/provisioning
+    depends_on:
+      - influxdb
+    environment:
+      - GF_SECURITY_ADMIN_USER=root
+      - GF_SECURITY_ADMIN_PASSWORD=rootpassword
+
 networks:
   net:
     external: true
 
 volumes:
   mongodb_data_container:
+  influxdb-storage:
+  chronograf-storage:
+  grafana-storage:
