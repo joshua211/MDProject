@@ -40,28 +40,26 @@ public class Aggregation {
         propertiesP.setProperty("bootstrap.servers", kafkaServer);
 
 
+
         /* Operate on Datastream */
 
 
-        SingleOutputStreamOperator<Double> sum = input.map(new Map()).keyBy(v -> v.f0).window(TumblingEventTimeWindows.of(Time.minutes(1)))
-                .reduce(new ReduceFunction<Tuple2<Double, Integer>>() {
-                    @Override
-                    public Tuple2<Double, Integer> reduce(Tuple2<Double, Integer> value1, Tuple2<Double, Integer> value2)
-                            throws Exception {
-                        return new Tuple2<>(value1.f0 + value2.f0, value1.f1 + value2.f1);
-                    }
-                }).map(new AVG());
+        SingleOutputStreamOperator<Double> sum = input.map(new Map()).keyBy(v -> v.f0).window(TumblingProcessingTimeWindows.of(Time.minutes(1)))
+                .reduce((t1, t2) -> new Tuple2(t1.f0 + t2.f0, t1.f1 + t2.f1))
+                .map(new AVG());
+
 
         /* Create Producer wich writes into desired topic*/
         FlinkKafkaProducer<String> producer = new FlinkKafkaProducer<>("FilteredTopics", new SimpleStringSchema(), propertiesP);
         /* Execute to above defined operation on the producer*/
-        sum.map(s -> s.toString()).addSink(producer);
+        sum.map(s -> new MyProperties(s).toString()).addSink(producer);
 
 
         sum.print();
 
         env.execute("FlinkAggregation");
     }
+
 
     public static class AverageAccumulator {
         long count;
