@@ -61,6 +61,17 @@ public class Aggregation {
     }
 
 
+    private static class AVG implements MapFunction<Tuple2<Double, Integer>, Double> {
+        @Override
+        public Double map(Tuple2<Double, Integer> t) {
+            return new Double(t.f0/t.f1);
+        }
+    }
+
+
+
+    
+
     public static class AverageAccumulator {
         long count;
         long sum;
@@ -112,10 +123,4 @@ public class Aggregation {
         }
     }
 
-    private static class AVG implements MapFunction<Tuple2<Double, Integer>, Double> {
-        @Override
-        public Double map(Tuple2<Double, Integer> t) {
-            return new Double(t.f0/t.f1);
-        }
-    }
 }
