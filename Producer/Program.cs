@@ -41,11 +41,10 @@ namespace Producer
             Log.Information("Starting connector for server {Server}", server);
 
             var coinbaseClient = new CoinbaseProClient();
-
             var socket = coinbaseClient.WebSocket;
             socket.OnMatchReceived += (sender, args) => queue.Enqueue(new Trade(
                 args.LastOrder.TradeId,
-                args.LastOrder.Time.Date,
+                args.LastOrder.Time.DateTime,
                 args.LastOrder.Price,
                 args.LastOrder.Size,
                 args.LastOrder.ProductId));
